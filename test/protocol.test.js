@@ -18,7 +18,7 @@ describe('SelfInfo Response Parsing', () => {
         // Build a mock SelfInfo response
         const writer = new BufferWriter();
         writer.writeByte(Constants.ResponseCodes.SelfInfo);
-        writer.writeByte(1);        // type
+        writer.writeByte(Constants.AdvType.Chat);  // type
         writer.writeByte(20);       // txPower
         writer.writeByte(30);       // maxTxPower
         writer.writeBytes(new Uint8Array(32).fill(0xAB)); // publicKey
@@ -27,7 +27,7 @@ describe('SelfInfo Response Parsing', () => {
         writer.writeBytes(new Uint8Array(3)); // reserved
         writer.writeByte(1);        // manualAddContacts
         writer.writeUInt32LE(915000); // radioFreq
-        writer.writeUInt32LE(125);   // radioBw (4 bytes!)
+        writer.writeUInt32LE(125);   // radioBw
         writer.writeByte(10);       // radioSf
         writer.writeByte(5);        // radioCr
         writer.writeString('TestNode'); // name
@@ -48,7 +48,7 @@ describe('SelfInfo Response Parsing', () => {
         assert.strictEqual(result.advLon, -87654321);
         assert.strictEqual(result.manualAddContacts, 1);
         assert.strictEqual(result.radioFreq, 915000);
-        assert.strictEqual(result.radioBw, 125);  // Verify 4-byte read
+        assert.strictEqual(result.radioBw, 125);
         assert.strictEqual(result.radioSf, 10);
         assert.strictEqual(result.radioCr, 5);
         assert.strictEqual(result.name, 'TestNode');
@@ -60,7 +60,7 @@ describe('Contact Response Parsing', () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.ResponseCodes.Contact);
         writer.writeBytes(new Uint8Array(32).fill(0xCD)); // publicKey
-        writer.writeByte(2);        // type
+        writer.writeByte(Constants.AdvType.Repeater);  // type
         writer.writeByte(0x01);     // flags
         writer.writeInt8LE(3);      // outPathLen
         writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (fixed 64 bytes)
@@ -173,7 +173,7 @@ describe('NewAdvert Push Parsing', () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.PushCodes.NewAdvert);
         writer.writeBytes(new Uint8Array(32).fill(0xEF)); // publicKey
-        writer.writeByte(1);        // type
+        writer.writeByte(Constants.AdvType.Chat);  // type
         writer.writeByte(0x02);     // flags
         writer.writeInt8LE(2);      // outPathLen
         writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (fixed 64 bytes)
