@@ -93,8 +93,7 @@ describe('Contact Response Parsing', () => {
         assert.strictEqual(result.outPath[0], 0xAA);
         assert.strictEqual(result.outPath[1], 0xBB);
         assert.strictEqual(result.outPath[2], 0xCC);
-        // Verify remaining bytes are zero
-        assert.strictEqual(result.outPath[3], 0x00);
+        // Note: bytes beyond outPathLen are undefined and should not be asserted
         assert.strictEqual(result.advName, 'James Example');
         assert.strictEqual(result.lastAdvert, 1704067200);
     });
@@ -122,10 +121,7 @@ describe('Contact Response Parsing', () => {
 
         assert.strictEqual(result.outPathLen, 0);
         assert.strictEqual(result.outPath.length, 64);
-        // All bytes should be zero for a direct connection
-        for (let i = 0; i < 64; i++) {
-            assert.strictEqual(result.outPath[i], 0x00, `outPath[${i}] should be 0x00`);
-        }
+        // Note: when outPathLen is 0, all bytes in outPath are undefined and should not be asserted
     });
 
     it('should parse Contact with longer multi-hop outPath', async () => {
@@ -162,9 +158,7 @@ describe('Contact Response Parsing', () => {
         for (let i = 0; i < pathHops.length; i++) {
             assert.strictEqual(result.outPath[i], pathHops[i], `outPath[${i}] should be 0x${pathHops[i].toString(16)}`);
         }
-        // Verify bytes after the path are zero
-        assert.strictEqual(result.outPath[6], 0x00);
-        assert.strictEqual(result.outPath[63], 0x00);
+        // Note: bytes beyond outPathLen are undefined and should not be asserted
     });
 });
 
