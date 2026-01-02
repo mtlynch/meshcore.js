@@ -68,7 +68,7 @@ describe('Contact Response Parsing', () => {
         writer.writeBytes(new Uint8Array(32).fill(0xCD)); // publicKey
         writer.writeByte(Constants.AdvType.Repeater);  // type
         writer.writeByte(0x01);     // flags
-        writer.writeInt8LE(3);      // outPathLen
+        writer.writeInt8(3);        // outPathLen
         writer.writeBytes(outPath); // outPath (fixed 64 bytes)
         writer.writeCString('James Example', 32); // advName (32 bytes C-string)
         writer.writeUInt32LE(1704067200); // lastAdvert (timestamp)
@@ -105,7 +105,7 @@ describe('Contact Response Parsing', () => {
         writer.writeBytes(new Uint8Array(32).fill(0xEE)); // publicKey
         writer.writeByte(Constants.AdvType.Chat);  // type
         writer.writeByte(0x00);     // flags
-        writer.writeInt8LE(0);      // outPathLen = 0 (direct connection)
+        writer.writeInt8(0);        // outPathLen = 0 (direct connection)
         writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (all zeros)
         writer.writeCString('Direct Contact', 32); // advName
         writer.writeUInt32LE(1704067200); // lastAdvert
@@ -141,7 +141,7 @@ describe('Contact Response Parsing', () => {
         writer.writeBytes(new Uint8Array(32).fill(0xAB)); // publicKey
         writer.writeByte(Constants.AdvType.Repeater);  // type
         writer.writeByte(0x03);     // flags
-        writer.writeInt8LE(6);      // outPathLen = 6 hops
+        writer.writeInt8(6);        // outPathLen = 6 hops
         writer.writeBytes(outPath); // outPath
         writer.writeCString('Multi Hop Node', 32); // advName
         writer.writeUInt32LE(1704067200); // lastAdvert
@@ -172,8 +172,8 @@ describe('LogRxData Push Parsing', () => {
     it('should parse SNR and RSSI from beginning of payload', async () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.PushCodes.LogRxData);
-        writer.writeInt8LE(40);  // snr * 4 = 10.0
-        writer.writeInt8LE(-90); // rssi
+        writer.writeInt8(40);  // snr * 4 = 10.0
+        writer.writeInt8(-90); // rssi
         writer.writeBytes([0xDE, 0xAD, 0xBE, 0xEF]); // raw payload
 
         const conn = new Connection();
@@ -191,8 +191,8 @@ describe('LogRxData Push Parsing', () => {
     it('should handle negative SNR values', async () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.PushCodes.LogRxData);
-        writer.writeInt8LE(-20); // snr * 4 = -5.0
-        writer.writeInt8LE(-110); // rssi
+        writer.writeInt8(-20); // snr * 4 = -5.0
+        writer.writeInt8(-110); // rssi
         writer.writeBytes([0x01, 0x02]); // raw payload
 
         const conn = new Connection();
@@ -230,8 +230,8 @@ describe('RawData Push Parsing', () => {
     it('should parse SNR, RSSI, reserved byte, then payload', async () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.PushCodes.RawData);
-        writer.writeInt8LE(24);  // snr * 4 = 6.0
-        writer.writeInt8LE(-85); // rssi
+        writer.writeInt8(24);    // snr * 4 = 6.0
+        writer.writeInt8(-85);   // rssi
         writer.writeByte(0x00);  // reserved
         writer.writeBytes([0xCA, 0xFE, 0xBA, 0xBE]); // payload
 
@@ -255,7 +255,7 @@ describe('NewAdvert Push Parsing', () => {
         writer.writeBytes(new Uint8Array(32).fill(0xEF)); // publicKey
         writer.writeByte(Constants.AdvType.Chat);  // type
         writer.writeByte(0x02);     // flags
-        writer.writeInt8LE(2);      // outPathLen
+        writer.writeInt8(2);        // outPathLen
         writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (fixed 64 bytes)
         writer.writeCString('NewNode', 32); // advName (32 bytes C-string)
         writer.writeUInt32LE(1704067200); // lastAdvert
@@ -286,7 +286,7 @@ describe('Sent Response Parsing', () => {
     it('should parse Sent response with result, expectedAckCrc, and estTimeout', async () => {
         const writer = new BufferWriter();
         writer.writeByte(Constants.ResponseCodes.Sent);
-        writer.writeInt8LE(0);            // result
+        writer.writeInt8(0);              // result
         writer.writeUInt32LE(0x12345678); // expectedAckCrc
         writer.writeUInt32LE(5000);       // estTimeout
 
