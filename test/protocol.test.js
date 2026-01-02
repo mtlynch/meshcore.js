@@ -139,7 +139,7 @@ describe('Contact Response Parsing', () => {
         writer.writeByte(0x03);     // flags
         writer.writeInt8(6);        // outPathLen = 6 hops
         writer.writeBytes(outPath); // outPath
-        writer.writeCString('Multi Hop Node', 32); // advName
+        writer.writeCString('Multi-hop Node', 32); // advName
         writer.writeUInt32LE(1704067200); // lastAdvert
         writer.writeUInt32LE(40000000);   // advLat
         writer.writeUInt32LE(0);          // advLon
