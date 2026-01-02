@@ -57,14 +57,20 @@ describe('SelfInfo Response Parsing', () => {
 
 describe('Contact Response Parsing', () => {
     it('should parse Contact with correct field order starting with publicKey', async () => {
+        // Create a specific outPath with known values for the first 3 bytes (matching outPathLen)
+        const outPath = new Uint8Array(64).fill(0x00);
+        outPath[0] = 0xAA; // First hop
+        outPath[1] = 0xBB; // Second hop
+        outPath[2] = 0xCC; // Third hop
+
         const writer = new BufferWriter();
         writer.writeByte(Constants.ResponseCodes.Contact);
         writer.writeBytes(new Uint8Array(32).fill(0xCD)); // publicKey
         writer.writeByte(Constants.AdvType.Repeater);  // type
         writer.writeByte(0x01);     // flags
         writer.writeInt8LE(3);      // outPathLen
-        writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (fixed 64 bytes)
-        writer.writeCString('ContactName', 32); // advName (32 bytes C-string)
+        writer.writeBytes(outPath); // outPath (fixed 64 bytes)
+        writer.writeCString('James Example', 32); // advName (32 bytes C-string)
         writer.writeUInt32LE(1704067200); // lastAdvert (timestamp)
         writer.writeUInt32LE(40000000);   // advLat
         writer.writeUInt32LE(-74000000 >>> 0); // advLon (as unsigned)
@@ -83,8 +89,82 @@ describe('Contact Response Parsing', () => {
         assert.strictEqual(result.flags, 0x01);
         assert.strictEqual(result.outPathLen, 3);
         assert.strictEqual(result.outPath.length, 64);
-        assert.strictEqual(result.advName, 'ContactName');
+        // Verify the actual path bytes match what was written
+        assert.strictEqual(result.outPath[0], 0xAA);
+        assert.strictEqual(result.outPath[1], 0xBB);
+        assert.strictEqual(result.outPath[2], 0xCC);
+        // Verify remaining bytes are zero
+        assert.strictEqual(result.outPath[3], 0x00);
+        assert.strictEqual(result.advName, 'James Example');
         assert.strictEqual(result.lastAdvert, 1704067200);
+    });
+
+    it('should parse Contact with empty outPath (direct connection)', async () => {
+        const writer = new BufferWriter();
+        writer.writeByte(Constants.ResponseCodes.Contact);
+        writer.writeBytes(new Uint8Array(32).fill(0xEE)); // publicKey
+        writer.writeByte(Constants.AdvType.Chat);  // type
+        writer.writeByte(0x00);     // flags
+        writer.writeInt8LE(0);      // outPathLen = 0 (direct connection)
+        writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath (all zeros)
+        writer.writeCString('Direct Contact', 32); // advName
+        writer.writeUInt32LE(1704067200); // lastAdvert
+        writer.writeUInt32LE(0);          // advLat
+        writer.writeUInt32LE(0);          // advLon
+        writer.writeUInt32LE(1704153600); // lastMod
+
+        const conn = new Connection();
+        const resultPromise = waitForEvent(conn, Constants.ResponseCodes.Contact);
+
+        conn.onFrameReceived(writer.toBytes());
+
+        const result = await resultPromise;
+
+        assert.strictEqual(result.outPathLen, 0);
+        assert.strictEqual(result.outPath.length, 64);
+        // All bytes should be zero for a direct connection
+        for (let i = 0; i < 64; i++) {
+            assert.strictEqual(result.outPath[i], 0x00, `outPath[${i}] should be 0x00`);
+        }
+    });
+
+    it('should parse Contact with longer multi-hop outPath', async () => {
+        // Create a path with 6 hops
+        const outPath = new Uint8Array(64).fill(0x00);
+        const pathHops = [0x11, 0x22, 0x33, 0x44, 0x55, 0x66];
+        for (let i = 0; i < pathHops.length; i++) {
+            outPath[i] = pathHops[i];
+        }
+
+        const writer = new BufferWriter();
+        writer.writeByte(Constants.ResponseCodes.Contact);
+        writer.writeBytes(new Uint8Array(32).fill(0xAB)); // publicKey
+        writer.writeByte(Constants.AdvType.Repeater);  // type
+        writer.writeByte(0x03);     // flags
+        writer.writeInt8LE(6);      // outPathLen = 6 hops
+        writer.writeBytes(outPath); // outPath
+        writer.writeCString('Multi Hop Node', 32); // advName
+        writer.writeUInt32LE(1704067200); // lastAdvert
+        writer.writeUInt32LE(40000000);   // advLat
+        writer.writeUInt32LE(0);          // advLon
+        writer.writeUInt32LE(1704153600); // lastMod
+
+        const conn = new Connection();
+        const resultPromise = waitForEvent(conn, Constants.ResponseCodes.Contact);
+
+        conn.onFrameReceived(writer.toBytes());
+
+        const result = await resultPromise;
+
+        assert.strictEqual(result.outPathLen, 6);
+        assert.strictEqual(result.outPath.length, 64);
+        // Verify all path hops are correctly parsed
+        for (let i = 0; i < pathHops.length; i++) {
+            assert.strictEqual(result.outPath[i], pathHops[i], `outPath[${i}] should be 0x${pathHops[i].toString(16)}`);
+        }
+        // Verify bytes after the path are zero
+        assert.strictEqual(result.outPath[6], 0x00);
+        assert.strictEqual(result.outPath[63], 0x00);
     });
 });
 
