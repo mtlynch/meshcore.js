@@ -85,13 +85,7 @@ describe('Contact Response Parsing', () => {
         assert.deepStrictEqual(result.publicKey, new Uint8Array(32).fill(0xCD));
         assert.strictEqual(result.type, 2);
         assert.strictEqual(result.flags, 0x01);
-        assert.strictEqual(result.outPathLen, 3);
-        assert.strictEqual(result.outPath.length, 64);
-        // Verify the actual path bytes match what was written
-        assert.strictEqual(result.outPath[0], 0xAA);
-        assert.strictEqual(result.outPath[1], 0xBB);
-        assert.strictEqual(result.outPath[2], 0xCC);
-        // Note: bytes beyond outPathLen are undefined and should not be asserted
+        assert.deepStrictEqual(result.outPath, new Uint8Array([0xAA, 0xBB, 0xCC]));
         assert.strictEqual(result.advName, 'James Example');
         assert.strictEqual(result.lastAdvert, 1704067200);
     });
@@ -117,9 +111,7 @@ describe('Contact Response Parsing', () => {
 
         const result = await resultPromise;
 
-        assert.strictEqual(result.outPathLen, 0);
-        assert.strictEqual(result.outPath.length, 64);
-        // Note: when outPathLen is 0, all bytes in outPath are undefined and should not be asserted
+        assert.deepStrictEqual(result.outPath, new Uint8Array([]));
     });
 
     it('should parse Contact with longer multi-hop outPath', async () => {
@@ -150,13 +142,53 @@ describe('Contact Response Parsing', () => {
 
         const result = await resultPromise;
 
-        assert.strictEqual(result.outPathLen, 6);
-        assert.strictEqual(result.outPath.length, 64);
-        // Verify all path hops are correctly parsed
-        for (let i = 0; i < pathHops.length; i++) {
-            assert.strictEqual(result.outPath[i], pathHops[i], `outPath[${i}] should be 0x${pathHops[i].toString(16)}`);
-        }
-        // Note: bytes beyond outPathLen are undefined and should not be asserted
+        assert.deepStrictEqual(result.outPath, new Uint8Array([0x11, 0x22, 0x33, 0x44, 0x55, 0x66]));
+    });
+
+    it('should throw error for negative outPathLen (-1)', async () => {
+        const writer = new BufferWriter();
+        writer.writeByte(Constants.ResponseCodes.Contact);
+        writer.writeBytes(new Uint8Array(32).fill(0xAB)); // publicKey
+        writer.writeByte(Constants.AdvType.Chat);  // type
+        writer.writeByte(0x00);     // flags
+        writer.writeInt8(-1);       // outPathLen = -1 (invalid)
+        writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath
+        writer.writeCString('Invalid Contact', 32); // advName
+        writer.writeUInt32LE(1704067200); // lastAdvert
+        writer.writeUInt32LE(0);          // advLat
+        writer.writeUInt32LE(0);          // advLon
+        writer.writeUInt32LE(1704153600); // lastMod
+
+        const conn = new Connection();
+
+        assert.throws(() => {
+            conn.onFrameReceived(writer.toBytes());
+        }, {
+            message: 'Invalid outPathLen: -1'
+        });
+    });
+
+    it('should throw error for outPathLen exceeding buffer size (65)', async () => {
+        const writer = new BufferWriter();
+        writer.writeByte(Constants.ResponseCodes.Contact);
+        writer.writeBytes(new Uint8Array(32).fill(0xAB)); // publicKey
+        writer.writeByte(Constants.AdvType.Chat);  // type
+        writer.writeByte(0x00);     // flags
+        writer.writeInt8(65);       // outPathLen = 65 (exceeds 64-byte buffer)
+        writer.writeBytes(new Uint8Array(64).fill(0x00)); // outPath
+        writer.writeCString('Invalid Contact', 32); // advName
+        writer.writeUInt32LE(1704067200); // lastAdvert
+        writer.writeUInt32LE(0);          // advLat
+        writer.writeUInt32LE(0);          // advLon
+        writer.writeUInt32LE(1704153600); // lastMod
+
+        const conn = new Connection();
+
+        assert.throws(() => {
+            conn.onFrameReceived(writer.toBytes());
+        }, {
+            message: 'Invalid outPathLen: 65'
+        });
     });
 });
 
@@ -265,8 +297,7 @@ describe('NewAdvert Push Parsing', () => {
         assert.deepStrictEqual(result.publicKey, new Uint8Array(32).fill(0xEF));
         assert.strictEqual(result.type, 1);
         assert.strictEqual(result.flags, 0x02);
-        assert.strictEqual(result.outPathLen, 2);
-        assert.strictEqual(result.outPath.length, 64);
+        assert.deepStrictEqual(result.outPath, new Uint8Array([0x00, 0x00]));
         assert.strictEqual(result.advName, 'NewNode');
         assert.strictEqual(result.lastAdvert, 1704067200);
         assert.strictEqual(result.lastMod, 1704153600);

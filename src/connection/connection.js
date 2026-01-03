@@ -477,17 +477,30 @@ class Connection extends EventEmitter {
     }
 
     onNewAdvertPush(bufferReader) {
+        const publicKey = bufferReader.readBytes(32);
+        const type = bufferReader.readByte();
+        const flags = bufferReader.readByte();
+        const outPathLen = bufferReader.readInt8();
+        const outPathRaw = bufferReader.readBytes(64);
+        if (outPathLen < 0 || outPathLen > 64) {
+            throw new Error(`Invalid outPathLen: ${outPathLen}`);
+        }
+        const outPath = outPathRaw.slice(0, outPathLen);
+        const advName = bufferReader.readCString(32);
+        const lastAdvert = bufferReader.readUInt32LE();
+        const advLat = bufferReader.readUInt32LE();
+        const advLon = bufferReader.readUInt32LE();
+        const lastMod = bufferReader.readUInt32LE();
         this.emit(Constants.PushCodes.NewAdvert, {
-            publicKey: bufferReader.readBytes(32),
-            type: bufferReader.readByte(),
-            flags: bufferReader.readByte(),
-            outPathLen: bufferReader.readInt8(),
-            outPath: bufferReader.readBytes(64),
-            advName: bufferReader.readCString(32),
-            lastAdvert: bufferReader.readUInt32LE(),
-            advLat: bufferReader.readUInt32LE(),
-            advLon: bufferReader.readUInt32LE(),
-            lastMod: bufferReader.readUInt32LE(),
+            publicKey,
+            type,
+            flags,
+            outPath,
+            advName,
+            lastAdvert,
+            advLat,
+            advLon,
+            lastMod,
         });
     }
 
@@ -511,17 +524,30 @@ class Connection extends EventEmitter {
     }
 
     onContactResponse(bufferReader) {
+        const publicKey = bufferReader.readBytes(32);
+        const type = bufferReader.readByte();
+        const flags = bufferReader.readByte();
+        const outPathLen = bufferReader.readInt8();
+        const outPathRaw = bufferReader.readBytes(64);
+        if (outPathLen < 0 || outPathLen > 64) {
+            throw new Error(`Invalid outPathLen: ${outPathLen}`);
+        }
+        const outPath = outPathRaw.slice(0, outPathLen);
+        const advName = bufferReader.readCString(32);
+        const lastAdvert = bufferReader.readUInt32LE();
+        const advLat = bufferReader.readUInt32LE();
+        const advLon = bufferReader.readUInt32LE();
+        const lastMod = bufferReader.readUInt32LE();
         this.emit(Constants.ResponseCodes.Contact, {
-            publicKey: bufferReader.readBytes(32),
-            type: bufferReader.readByte(),
-            flags: bufferReader.readByte(),
-            outPathLen: bufferReader.readInt8(),
-            outPath: bufferReader.readBytes(64),
-            advName: bufferReader.readCString(32),
-            lastAdvert: bufferReader.readUInt32LE(),
-            advLat: bufferReader.readUInt32LE(),
-            advLon: bufferReader.readUInt32LE(),
-            lastMod: bufferReader.readUInt32LE(),
+            publicKey,
+            type,
+            flags,
+            outPath,
+            advName,
+            lastAdvert,
+            advLat,
+            advLon,
+            lastMod,
         });
     }
 
